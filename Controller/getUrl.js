@@ -1,7 +1,7 @@
 const urlModel = require('../models/urlModel')
 
 const getUrl = async function (req, res){
-    // try{
+    try{
         let urlCode = req.params.urlCode
         if(!urlCode) return res.status(400).send({status : false, msg : "Please insert a url code!"})
 
@@ -17,19 +17,13 @@ const getUrl = async function (req, res){
             return res.status(404).send({msg: "No Url Found"})
         }
        
-    // }catch(error){
-    //     res.status(500).send({message : error.message})
-    // }
+    }catch(error){
+        res.status(500).send({message : error.message})
+    }
 }
 
 
 
-// const getUrl = async function(req,res){
-//     const url = await urlModel.findOne({
-//         urlCode:req.params.urlCode
-//     })
-    
-// }
 
 
 
