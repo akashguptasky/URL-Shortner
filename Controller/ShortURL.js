@@ -4,6 +4,7 @@ const shortid = require('shortid');
 
 const shortUrl = async function(req,res)
 {
+    try{
     const data = req.body;
     const longUrl  = data.longUrl
 
@@ -29,7 +30,10 @@ const shortUrl = async function(req,res)
     }
     
     const createdData = await urlModel.create(myObject);
-    res.status(201).send({status:true, data:createdData})
+    res.status(201).send({status:true, data:myObject})
+} catch(error){
+    res.status(500).send({status:false, message:error.message})
+}
 
 }
 
