@@ -27,9 +27,6 @@ const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);
 const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 
 
-
-
-
 const getUrl = async function (req, res) {
     try {
         let urlCode = req.params.urlCode
@@ -39,17 +36,19 @@ const getUrl = async function (req, res) {
 
         //========================================
         let cachedProfileData = await GET_ASYNC(`${urlCode}`)
+      
         if (cachedProfileData) {
             let data = JSON.parse(cachedProfileData)
             res.redirect(data.longUrl)
         } else {
-            let url = await urlModel.findOne({ urlCode: urlCode })
+            let url = await urlModel.findOne({ urlCode: urlCode })  
             if (url) {
-                await SET_ASYNC(`${url.urlCode}`, JSON.stringify(url))
+                await SET_ASYNC(`${url.urlCode}`, JSON.stringify(url)) 
+                
                 return res.redirect(url.longUrl)
             }
             else {
-                return res.status(404).send({status:false, message: "No Url Found" })
+                return res.status(404).send({ status: false, message: "No Url Found" })
             }
 
         }

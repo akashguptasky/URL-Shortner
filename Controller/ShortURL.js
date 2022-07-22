@@ -7,6 +7,7 @@ const shortid = require('shortid');
 const redis = require("redis");
 
 const { promisify } = require("util");
+const { getUrl } = require('./getUrl');
 
 //Connect to redis
 const redisClient = redis.createClient(
@@ -34,66 +35,70 @@ const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 
 
 
-const shortUrl = async function(req,res)
-{
-    try{
-    const data = req.body;
+const shortUrl = async function (req, res) {
+    try {
+        const data = req.body;
 
-    if(validation.isBodyEmpty(data)) return res.status(400).send({status:false, message:"Please provide required Data"});
-    
-    const longUrl  = data.longUrl
-    if(!validation.isValid(longUrl)) return res.status(400).send({status:false, message:"Please provide valid longUrl"}); 
+        if (validation.isBodyEmpty(data)) return res.status(400).send({ status: false, message: "Please provide required Data" });
 
-    if(!validation.isValidUrl(longUrl)) res.status(400).send({status:false, message:`longUrl "${longUrl}" is not valid`});
+        const longUrl = data.longUrl
+        if (!validation.isValid(longUrl)) return res.status(400).send({ status: false, message: "Please provide valid longUrl" });
 
-    let urlId = shortid.generate();
-    urlId = urlId.toLowerCase();
-//===================================================
-    const baseUrl = "http://localhost:4000"
-    let cachedProfileData = await GET_ASYNC(`${longUrl}`)
-    console.log(cachedProfileData)
-    if (cachedProfileData) {
-        let data = JSON.parse(cachedProfileData)
-        return res.status(200).send({status:true, data:{urlCode:data.urlCode, longUrl:longUrl, shortUrl:`${baseUrl}/${data.urlCode}`}})
-    } else {
-        const isUrlExist = await urlModel.findOne({longUrl:longUrl})
-      
-        if (isUrlExist) {
-           let data =  await SET_ASYNC(`${longUrl}`, JSON.stringify(isUrlExist))
-           console.log("This is my Data "+data);
-            
-            return res.status(200).send({status:true, data:{urlCode:isUrlExist.urlCode, longUrl:longUrl, shortUrl:`${baseUrl}/${isUrlExist.urlCode}`}})
-        }
-        else {
-            let myObject = {
-                urlCode:urlId,
-                longUrl:longUrl,
-                shortUrl:`${baseUrl}/${urlId}` 
+        if (!validation.isValidUrl(longUrl)) res.status(400).send({ status: false, message: `longUrl "${longUrl}" is not valid` });
+        let reg = /^(ftp|http|https):\/\/[^ "]+$/
+        if (!reg.test(longUrl)) return res.status(400).send({ status: false, message: "Please provide a valid url" })
+
+        let urlId = shortid.generate()
+        urlId = urlId.toLowerCase();
+
+        
+        
+        //===================================================
+        const baseUrl = "http://localhost:3000"
+        let cachedProfileData = await GET_ASYNC(`${longUrl}`)
+        console.log(cachedProfileData)
+        if (cachedProfileData) {
+            let data = JSON.parse(cachedProfileData)
+            return res.status(200).send({ status: true, data: { urlCode: data.urlCode, longUrl: longUrl, shortUrl: `${baseUrl}/${data.urlCode}` } })
+        } else {
+            const isUrlExist = await urlModel.findOne({ longUrl: longUrl })
+
+            if (isUrlExist) {
+                let data = await SET_ASYNC(`${isUrlExist.longUrl}`, JSON.stringify(isUrlExist))
+                console.log("This is my Data " + data);
+
+                return res.status(200).send({ status: true, data: { urlCode: isUrlExist.urlCode, longUrl: longUrl, shortUrl: `${baseUrl}/${isUrlExist.urlCode}` } })
             }
-            
-            await urlModel.create(myObject);
-            await SET_ASYNC(`${longUrl}`, JSON.stringify(myObject))
-            res.status(201).send({status:true, data:myObject})
+            else {
+                let myObject = {
+                    urlCode: urlId,
+                    longUrl: longUrl,
+                    shortUrl: `${baseUrl}/${urlId}`
+                }
+
+                await urlModel.create(myObject);
+                await SET_ASYNC(`${longUrl}`, JSON.stringify(myObject))
+                res.status(201).send({ status: true, data: myObject })
+            }
+
         }
+        //====================================================================
 
+
+
+
+
+        // if(isUrlExist) return res.status(200).send({status:true, data:{urlCode:isUrlExist.urlCode, longUrl:longUrl, shortUrl:`${baseUrl}/${isUrlExist.urlCode}`}})
+
+
+
+    } catch (error) {
+        res.status(500).send({ status: false, message: error.message })
     }
-//====================================================================
-
-
-   
-   
-
-    // if(isUrlExist) return res.status(200).send({status:true, data:{urlCode:isUrlExist.urlCode, longUrl:longUrl, shortUrl:`${baseUrl}/${isUrlExist.urlCode}`}})
-
-
-
-} catch(error){
-    res.status(500).send({status:false, message:error.message})
-}
 
 }
 
-module.exports ={shortUrl}
+module.exports = { shortUrl }
 
 
 
