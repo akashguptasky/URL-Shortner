@@ -6,7 +6,7 @@ const shortid = require('shortid');
 
 const redis = require("redis");
 
-const { promisify } = require("util");
+const {promisify}  = require("util");
 const { getUrl } = require('./getUrl');
 
 //Connect to redis
@@ -28,6 +28,7 @@ redisClient.on("connect", async function () {
 
 //Connection setup for redis
 
+// promisify and callbackify
 const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);
 const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 
@@ -42,9 +43,10 @@ const shortUrl = async function (req, res) {
         if (validation.isBodyEmpty(data)) return res.status(400).send({ status: false, message: "Please provide required Data" });
 
         const longUrl = data.longUrl
-        if (!validation.isValid(longUrl)) return res.status(400).send({ status: false, message: "Please provide valid longUrl" });
+        if (!validation.isValid(longUrl)) return res.status(400).send({ status: false, message: "longUrl shoud not be empty" }); //longUrl:"     "
 
         if (!validation.isValidUrl(longUrl)) res.status(400).send({ status: false, message: `longUrl "${longUrl}" is not valid` });
+        
         let reg = /^(ftp|http|https):\/\/[^ "]+$/
         if (!reg.test(longUrl)) return res.status(400).send({ status: false, message: "Please provide a valid url" })
 
